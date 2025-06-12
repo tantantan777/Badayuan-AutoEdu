@@ -1,0 +1,73 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>八大员继续教育自动化助手</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="main-layout">
+    <!-- 左侧：操作与日志 -->
+    <section class="panel panel-left">
+      <!-- 日志区 -->
+      <div class="card card-log">
+        <div id="logs" class="log-list"></div>
+      </div>
+      <!-- 浏览器路径卡片 -->
+      <div class="card card-browser-path">
+        <input type="text" id="browser-path-input" class="input" placeholder="浏览器路径，如 C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe">
+        <button id="save-start-btn" class="btn btn-primary">开始</button>
+      </div>
+      <!-- 输入区 -->
+      <div class="card card-input">
+        <div class="input-label-row">
+          <label for="phone-input">注册手机号：</label>
+          <input type="text" id="phone-input" class="input" placeholder="注册手机号">
+        </div>
+        <div id="phone-error" class="input-error"></div>
+        <div class="input-label-row">
+          <label for="password-input">登录密码：</label>
+          <input type="text" id="password-input" class="input" placeholder="登录密码">
+        </div>
+        <div id="pass-error" class="input-error"></div>
+        <div class="captcha-row input-label-row">
+          <label for="captcha-input">图形验证码：</label>
+          <input type="text" id="captcha-input" class="input" placeholder="图形验证码">
+          <!-- 默认隐藏验证码图片 -->
+          <img id="captcha-img" src="captcha_placeholder.png" alt="验证码" class="captcha-img" style="display:none;" />
+        </div>
+        <button id="send-btn" class="btn btn-primary">发送</button>
+      </div>
+    </section>
+    <!-- 中间：二维码与进度 -->
+    <section class="panel panel-right">
+      <!-- 二维码区 -->
+      <div class="card card-qrcode">
+        <!-- 移除标题，只保留二维码图片和倒计时 -->
+        <img id="qrcode-img" src="" alt="二维码" style="display:none;" />
+        <div id="qrcode-timer" class="qrcode-timer"></div>
+      </div>
+      <!-- 进度信息区 -->
+      <div class="card card-progress">
+        <div class="card-title">进度信息</div>
+        <div class="progress-row"><span>课件总数</span><span id="total-course-count">0</span></div>
+        <div class="progress-row"><span>已完成课件数</span><span id="finished-course-count">0</span></div>
+        <div class="progress-row"><span>所有课件总时长</span><span id="total-duration">00:00:00</span></div>
+        <div class="progress-row"><span>剩余未观看课件总时长</span><span id="remain-duration">00:00:00</span></div>
+        <div class="progress-row"><span>本节课总时长</span><span id="current-total-duration">00:00:00</span></div>
+        <div class="progress-row"><span>本节课已观看时长</span><span id="current-watched-duration">00:00:00</span></div>
+        <div class="progress-row"><span>本节课预计完成时间</span><span id="lesson-finish-time">--:--:--</span></div>
+      </div>
+    </section>
+    <!-- 右侧：课件列表区 -->
+    <section class="panel panel-course">
+      <div class="card card-course-list">
+        <div class="card-title">课件列表</div>
+        <div id="course-list"></div>
+      </div>
+    </section>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html> 

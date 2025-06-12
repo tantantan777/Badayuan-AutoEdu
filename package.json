@@ -1,0 +1,32 @@
+{
+  "name": "badaoyuan-auto-edu",
+  "version": "1.0.0",
+  "description": "八大员继续教育自动化助手",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack:green": "electron-builder --win portable"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "^1.43.1",
+    "electron-store": "^8.1.0"
+  },
+  "build": {
+    "appId": "com.badaoyuan.autoedu",
+    "productName": "八大员继续教育自动化助手",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "portable"
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^28.2.3",
+    "electron-builder": "^24.0.0"
+  }
+} 
