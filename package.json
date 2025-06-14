@@ -1,7 +1,7 @@
 {
   "name": "badaoyuan-auto-edu",
-  "version": "1.0.0",
-  "description": "八大员继续教育自动化助手",
+  "version": "1.0.1",
+  "description": "四川省八大员继续教育自动化",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -15,7 +15,7 @@
   },
   "build": {
     "appId": "com.badaoyuan.autoedu",
-    "productName": "八大员继续教育自动化助手",
+    "productName": "四川省八大员继续教育自动化",
     "directories": {
       "output": "dist"
     },

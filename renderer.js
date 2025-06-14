@@ -18,6 +18,9 @@ function getTimeStamp() {
   return `[${h}:${m}:${s}]`;
 }
 
+// 全局变量，用于存储最小化计时器
+let minimizeTimer = null;
+
 // 日志输出函数
 function appendLog(msg) {
   const logs = document.getElementById('logs');
@@ -27,19 +30,28 @@ function appendLog(msg) {
   logs.scrollTop = logs.scrollHeight;
 
   // 二维码识别成功后处理
-  if (msg.includes('人脸识别成功')) {
+  if (msg.includes('人脸识别成功') && !msg.includes('已开始接上次播放视频')) {
     // 清空二维码图片
     const img = document.getElementById('qrcode-img');
     if (img) img.src = '';
+    // 清除之前的最小化计时器
+    if (minimizeTimer) {
+      clearTimeout(minimizeTimer);
+    }
     // 日志提示3秒后最小化
     appendLog('3s后自动最小化程序。');
-    setTimeout(() => {
+    minimizeTimer = setTimeout(() => {
       ipcRenderer.send('minimize-window');
     }, 3000);
   }
 
   // 守护进程检测到二维码弹窗重新出现时自动还原窗口
-  if (msg.includes('检测到二维码弹窗重新出现')) {
+  if (msg.includes('检测到二维码弹窗出现，请微信扫码进行人脸识别。')) {
+    // 清除之前的最小化计时器
+    if (minimizeTimer) {
+      clearTimeout(minimizeTimer);
+      minimizeTimer = null;
+    }
     ipcRenderer.send('restore-window');
   }
 }
@@ -87,7 +99,7 @@ document.getElementById('save-start-btn').onclick = async function() {
   try {
     await ipcRenderer.invoke('save-config', config);
     await ipcRenderer.invoke('start-playwright', config);
-    appendLog('已保存浏览器路径并启动Playwright。');
+    appendLog('已打开四川省八大员继续教育系统网页。');
     setBtnLoading(saveBtn, true, '已启动');
     sendBtn.disabled = false;
   } catch (e) {
@@ -211,8 +223,15 @@ ipcRenderer.on('qrcode-timer', (event, remain) => {
       img.style.display = 'none';
     }
   } else if (!qrcodeSuccess) {
-    timerElem.textContent = `倒计时 ${remain} 秒`;
-    timerElem.style.color = remain <= 10 ? 'red' : 'green';
+    // 直接显示从页面获取的倒计时文本
+    timerElem.textContent = remain;
+    // 如果倒计时小于10秒，显示红色警告
+    if ((remain.includes('0分') && remain.match(/(\d+)秒/) && parseInt(remain.match(/(\d+)秒/)[1]) < 10) ||
+        remain.includes('0分0秒')) {
+      timerElem.style.color = 'red';
+    } else {
+      timerElem.style.color = 'green';
+    }
   }
 });
 

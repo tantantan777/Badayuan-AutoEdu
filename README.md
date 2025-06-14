@@ -1,77 +1,167 @@
-# 八大员继续教育自动化助手
+# 四川省八大员继续教育自动化助手
 
-## 项目简介
-本项目为八大员继续教育自动化学习绿色版工具，基于 Electron + Playwright 实现。
+<div align="center">
+  <img src="icon.ico" width="128" height="128" alt="项目Logo">
+  <p>基于 Electron + Playwright 的高效学习辅助工具</p>
+  
+  ![版本](https://img.shields.io/badge/版本-1.0.1-blue)
+  ![协议](https://img.shields.io/badge/协议-MIT-green)
+  ![平台](https://img.shields.io/badge/平台-Windows-orange)
+</div>
 
-- 支持自动登录、自动刷课、二维码人脸识别自动处理。
-- 前端进度、课件列表、二维码状态实时同步。
-- 支持一键打包绿色版（免安装、解压即用）。
-- 绿色版便携、无注册表、无残留，适合U盘携带。
+## 📋 项目简介
 
-## 功能亮点
-- **自动化登录**：支持手机号、密码、验证码自动填写。
-- **自动刷课**：自动进入课程、自动切换课件、自动统计进度。
-- **二维码人脸识别弹窗自动处理**：弹窗出现时自动推送二维码，识别成功后自动恢复播放。
-- **实时进度同步**：前端实时显示课件列表、已观看时长、剩余时长、预计完成时间。
-- **托盘管理**：支持最小化到托盘、托盘右键退出。
-- **日志可视化**：所有关键步骤、异常均有详细日志，便于排查。
+本项目是专为四川省八大员继续教育设计的自动化学习工具，采用 Electron + Playwright 技术栈开发，旨在提高学习效率。
 
-## 界面说明
-- **左侧**：日志输出、浏览器路径、账号密码输入、验证码输入。
-- **中间**：二维码弹窗、倒计时、本节课进度信息（总时长、已观看、剩余、预计完成时间等）。
-- **右侧**：课件列表，状态一目了然。
+- ✅ **全自动化流程**：支持自动登录、自动刷课、二维码人脸识别自动处理
+- 📊 **实时数据同步**：前端进度、课件列表、二维码状态实时更新
+- 📦 **一键打包绿色版**：免安装、解压即用，适合U盘便携使用
+- 🧹 **零残留设计**：无注册表写入、无系统残留、隐私保护
 
-## 使用方法
+### 开发背景
 
-1. **安装依赖**
-   ```bash
-   npm install
-   ```
-2. **启动开发调试**
-   ```bash
-   npm start
-   ```
-   - 启动后按界面提示输入浏览器路径、手机号、密码、验证码。
-3. **打包绿色版（便携版）**
-   ```bash
-   npm run pack:green
-   ```
-   - 打包结果在 `dist/win-unpacked` 文件夹，直接压缩分发即可。
-   - 用户解压后，双击 exe 文件即可运行，无需安装。
+作为一名资料员，日常工作中需要频繁切换多个专业软件（如 CAD、Excel 等）和办公应用。在使用 Alt+Tab 快速切换窗口时，若同时打开浏览器播放视频，及其容易切换到浏览器。
+而且有时候会忘记人脸识别，导致视频一直挂起但未播放。
 
-## 绿色版分发说明
-- 只需分发 `dist/win-unpacked` 文件夹（或将其压缩为 zip）。
-- 用户解压后，直接运行 exe 文件即可。
-- 绿色版不会写注册表、不生成快捷方式、不产生系统残留。
+基于这一实际需求，本项目应运而生。其核心设计理念是：
+- 🎯 **后台静默运行**：避免窗口切换时的误操作
+- 🔔 **智能提醒**：人脸识别时自动弹窗提示
+- 🔄 **自动化处理**：完成验证后自动隐藏，确保工作不被打断
+- 💡 **简单高效**：一次配置，后续自动化处理，无需反复操作
 
-## 依赖环境
-- Node.js 18+（建议 LTS 版本）
-- Windows 10/11
-- 需联网（首次打包需能访问 GitHub 下载 Electron）
+虽然这是一个面向特定场景的工具，但相信能为有相似需求的同行提供便利。
 
-## 常见问题
-- **打包失败/下载慢**：请配置科学上网或使用国内镜像。
-- **二维码图片破损**：人脸识别成功后二维码会自动隐藏，不会显示破损图片。
-- **托盘退出无效**：已修复，右键托盘"退出"可彻底关闭程序。
-- **绿色版和安装包区别**：只需分发 win-unpacked 文件夹，exe 安装包可忽略。
+### 使用说明
 
-## 主要依赖
-- electron
-- playwright
-- electron-store
-- electron-builder（仅打包用）
+1. **首次配置**
+   - 启动程序，根据日志提示输入登录信息
+   - 完成初次人脸识别验证
 
-## 其它说明
-- 绿色版所有数据均在解压目录下，便于迁移和备份。
-- 支持多账号、多环境切换。
-- 日志详细，便于排查问题。
+2. **自动化流程**
+   - 系统自动完成课程选择与播放
+   - 需要人脸识别时自动弹窗提示
+   - 完成验证后自动隐藏窗口，继续后台运行
+   - 课程结束后自动切换下一课程
 
-## 开源协议与免责声明
+3. **智能提醒**
+   - 到达验证时间点自动唤醒窗口
+   - 完成人脸识别后自动恢复后台状态
+   - 全程无需手动监控课程进度
 
-- 本项目基于 MIT 协议开源，仅供个人学习与开发研究使用。
-- **严禁用于商业用途、批量刷课、违法违规用途。**
-- 严禁在未经授权情况下广泛传播、分发或用于任何违反目标网站服务条款的行为。
-- 使用本项目造成的任何后果由使用者本人承担，作者不承担任何法律责任。
+## 💻 界面布局
 
+- **左侧区域**：系统日志、浏览器配置、账号管理、验证码处理
+- **中央区域**：二维码显示、倒计时、当前课程进度详情
+- **右侧区域**：课件列表与状态指示器
+
+## 🔧 使用指南
+
+### 开发环境配置
+
+```bash
+# 安装项目依赖
+npm install
+
+# 启动开发调试环境
+npm start
+```
+
+### 打包绿色版
+
+```bash
+# 一键打包便携版
+npm run pack:green
+```
+
+打包结果位于 `dist/win-unpacked` 目录，可直接压缩分发。
+
+## 📦 绿色版分发指南
+
+- 分发内容：仅需分发 `dist/win-unpacked` 文件夹或其压缩包
+- 使用方法：用户解压后双击 exe 文件直接运行
+- 环境要求：Windows 10/11，无需额外安装运行库
+- 数据存储：所有配置与数据均保存在程序目录，便于备份与迁移
+
+## 🔍 系统要求
+
+- **操作系统**：Windows 10/11
+- **开发环境**：Node.js 18+ (推荐 LTS 版本)
+- **网络要求**：首次打包需访问 GitHub 下载 Electron
+
+## ❓ 常见问题
+
+| 问题描述 | 解决方案 |
+|---------|---------|
+| 打包过程下载失败 | 配置科学上网或使用国内镜像源 |
+| 二维码图片显示异常 | 人脸识别成功后会自动隐藏，属正常现象 |
+| 托盘退出无响应 | 已修复，右键托盘"退出"可正常关闭程序 |
+| 绿色版与安装包区别 | 仅需分发 win-unpacked 目录，无需安装包 |
+
+## 🧰 技术栈
+
+- **前端框架**：Electron (v28.2.3)
+- **自动化引擎**：Playwright (v1.43.1)
+- **数据持久化**：electron-store (v8.1.0)
+- **打包工具**：electron-builder (v24.0.0)
+
+## 📝 其他说明
+
+- 支持多账号管理与环境切换
+- 详细日志记录，便于问题排查
+- 数据本地存储，保护账号安全
+
+## ⚖️ 开源协议
+
+本项目采用 [MIT 许可证](https://opensource.org/licenses/MIT) 进行开源。
+
+```
+MIT License
+
+Copyright (c) 2025-2026 四川省八大员继续教育自动化助手
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## ⚠️ 免责声明
+
+1. 本项目仅供个人学习与技术研究使用，**严禁用于商业用途**。
+2. **严禁用于批量刷课、违法违规用途或规避正常学习流程**。
+3. 严禁在未经授权的情况下广泛传播、分发或用于任何违反目标网站服务条款的行为。
+4. 使用本软件造成的任何后果（包括但不限于账号封禁、学习记录无效等）由使用者本人承担。
+5. 本项目开发者不对使用本软件产生的任何后果承担法律责任。
+6. 如果您使用了本软件，即表示您已阅读并同意上述免责声明。
+
+## 🧡 支持项目
+
+如果本项目对您有所帮助，欢迎扫描下方二维码支持开发者继续完善本项目。
+
+<div align="center">
+  <p>微信赞赏码</p>
+  <img src="微信收款码.jpg" width="200" height="200" alt="微信赞赏码">
+</div>
+<div align="center">
+  <p>支付宝赞赏码</p>
+  <img src="支付宝收款码.jpg" width="200" height="200" alt="支付宝赞赏码">
+</div>
 ---
-如有问题或建议，欢迎反馈！ 
+
+<div align="center">
+  <p>如有问题或建议，欢迎提交 Issue 或 Pull Request</p>
+  <p>©️ 2024-2025 八大员继续教育自动化助手</p>
+</div> 
