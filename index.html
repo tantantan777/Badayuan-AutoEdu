@@ -59,11 +59,18 @@
         <div class="progress-row"><span>本节课已观看</span><span id="current-watched-duration">00:00:00</span></div>
         <div class="progress-row"><span>本节课预计完成时间</span><span id="lesson-finish-time">--:--:--</span></div>
       </div>
+      <!-- 退出按钮 -->
+      <button id="quit-btn" class="btn btn-danger">退出程序</button>
     </section>
     <!-- 右侧：课件列表区 -->
     <section class="panel panel-course">
       <div class="card card-course-list">
-        <div class="card-title">课件列表</div>
+        <div class="card-title-row">
+          <div class="card-title">课件列表</div>
+          <button id="refresh-course-list-btn" class="btn btn-small" title="刷新课件列表">
+            <span class="refresh-icon">↻</span>
+          </button>
+        </div>
         <div id="course-list"></div>
       </div>
     </section>

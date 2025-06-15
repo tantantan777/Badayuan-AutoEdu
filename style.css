@@ -31,9 +31,9 @@ body, html {
   max-width: 700px;
 }
 .panel-right {
-  flex: 1;
-  min-width: 320px;
-  max-width: 480px;
+  flex: 0 0 340px;
+  min-width: 340px;
+  max-width: 340px;
 }
 
 .panel-course {
@@ -54,6 +54,7 @@ body, html {
   border: 1.5px solid rgba(106,147,255,0.18);
   backdrop-filter: blur(2px);
   transition: box-shadow 0.2s, border 0.2s;
+  margin-bottom: var(--section-gap);
 }
 .card:hover {
   box-shadow: 0 8px 32px #409eff22, 0 2px 12px #0002;
@@ -67,6 +68,40 @@ body, html {
   letter-spacing: 1.2px;
   text-shadow: 0 2px 8px #e0c3fc55;
 }
+
+.card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.card-title-row .card-title {
+  margin-bottom: 0;
+}
+
+.btn-small {
+  padding: 5px 10px;
+  font-size: 14px;
+  border-radius: 4px;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refresh-icon {
+  font-size: 18px;
+  font-weight: bold;
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+#refresh-course-list-btn:hover .refresh-icon {
+  transform: rotate(180deg);
+}
+
 .card-log,
 .card-qrcode {
   min-height: 260px;
@@ -96,18 +131,35 @@ body, html {
   justify-content: center;
 }
 .card-progress {
-  min-height: 160px;
-  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: #ffffff;
+}
+
+.card-quit {
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: auto;
+}
+
+#quit-btn {
+  width: 340px;
+  height: 40px;
+  margin-top: 0px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 /* 日志区 */
 .log-list {
   font-size: 15px;
   color: #00ff00;
-  max-height: 320px;
-  min-height: 120px;
-  overflow-y: auto !important;
-  overflow-x: hidden;
+  height: 220px;
+  overflow: hidden !important;
   background: #181818;
   border-radius: 8px;
   padding: 6px 8px;
@@ -116,7 +168,10 @@ body, html {
   border: none;
   word-break: break-all;
   white-space: pre-wrap;
-  scrollbar-width: thin;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 /* 输入区 */
@@ -164,8 +219,18 @@ body, html {
   transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.1s;
 }
 .btn-primary {
-  background: linear-gradient(90deg, #409eff 0%, #66b1ff 100%);
+  background-color: #1890ff;
+  border-color: #1890ff;
   color: #fff;
+}
+.btn-danger {
+  background-color: #ff4d4f;
+  border-color: #ff4d4f;
+  color: #fff;
+}
+.btn-danger:hover {
+  background-color: #ff7875;
+  border-color: #ff7875;
 }
 .btn:hover {
   background: #e6f0ff !important;
@@ -246,11 +311,6 @@ body, html {
 }
 
 /* 进度信息区 */
-.card-progress {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
 .progress-row {
   display: flex;
   justify-content: space-between;
@@ -339,11 +399,75 @@ body, html {
   align-items: stretch;
   justify-content: flex-start;
   padding: 32px 26px 24px 26px;
+  overflow: hidden;
+  flex: 1;
+  height: var(--section-height);
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 #course-list {
   margin-top: 8px;
   font-size: 15px;
   color: #222;
-  max-height: 700px;
+  max-height: calc(100vh - 180px);
   overflow-y: auto;
+  padding-right: 8px;
+  flex: 1;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* 统一的区域高度 */
+:root {
+  --section-height: 221px;
+  --section-gap: 16px;
+}
+
+.card-browser {
+  height: var(--section-height);
+  display: flex;
+  flex-direction: column;
+}
+
+.browser-address-bar {
+  padding: 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  margin-bottom: var(--section-gap);
+}
+
+.browser-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.card-form {
+  height: var(--section-height);
+}
+
+.card-log {
+  height: var(--section-height);
+  display: flex;
+  flex-direction: column;
+}
+
+#log-area {
+  flex: 1;
+  overflow-y: auto;
+  font-family: monospace;
+  white-space: pre-wrap;
+  background: #f5f5f5;
+  padding: 8px;
+  border-radius: 4px;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 } 
