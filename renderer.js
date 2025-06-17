@@ -11,6 +11,7 @@ let isPlaying = false;              // 播放状态标志
 let selectedLi = null;              // 当前选中的课程项
 let currentTotalSeconds = 0;        // 当前课程总时长
 let finishedCourseTotalSeconds = 0; // 已完成课程总时长
+let lastWatchedSeconds = 0;         // 上次观察到的观看时长，用于检测是否在播放
 
 // ==================== 工具函数 ====================
 
@@ -380,7 +381,15 @@ ipcRenderer.on('update-course-list', (event, data) => {
   document.getElementById('finished-course-count').textContent = finishedCourseCount;
   document.getElementById('total-duration').textContent = secToTime(totalDurationSec);
   document.getElementById('current-total-duration').textContent = secToTime(currentTotalSeconds);
-  document.getElementById('current-watched-duration').textContent = secToTime(currentWatchedSeconds);
+  
+  const currentWatchedElem = document.getElementById('current-watched-duration');
+  if (currentWatchedElem) {
+    currentWatchedElem.textContent = secToTime(currentWatchedSeconds);
+    currentWatchedElem.style.color = 'red'; // 初始状态为暂停(红色)
+    // 重置lastWatchedSeconds以便下次检测播放状态
+    lastWatchedSeconds = currentWatchedSeconds;
+  }
+  
   // 剩余未观看课件总时长 = 总时长-已学完时长-本节课已观看时长
   const remainSeconds = totalDurationSec - finishedCourseTotalSeconds - currentWatchedSeconds;
   document.getElementById('remain-duration').textContent = secToTime(remainSeconds);
@@ -402,7 +411,13 @@ ipcRenderer.on('update-current-learned', (event, data) => {
   const elem = document.getElementById('current-watched-duration');
   if (elem) {
     elem.textContent = format(seconds);
-    elem.style.color = 'green'; // 只让时间为绿色
+    
+    // 检测播放状态：如果当前时长与上次时长不同，则视为正在播放
+    const isCurrentlyPlaying = seconds > lastWatchedSeconds;
+    // 更新颜色：播放中为绿色，暂停为红色
+    elem.style.color = isCurrentlyPlaying ? 'green' : 'red';
+    // 更新上次观察到的时长
+    lastWatchedSeconds = seconds;
   }
   // 实时刷新剩余未观看课件总时长
   if (typeof data.remainSeconds === 'number') {
@@ -425,7 +440,17 @@ setInterval(() => {
   if (!isPlaying || !selectedLi) return;
   const watched = Number(selectedLi.getAttribute('data-secondslearned')) || 0;
   // 更新本节课已观看时长
-  document.getElementById('current-watched-duration').textContent = secToTime(watched);
+  const currentWatchedElem = document.getElementById('current-watched-duration');
+  if (currentWatchedElem) {
+    currentWatchedElem.textContent = secToTime(watched);
+    // 检测播放状态：如果当前时长与上次时长不同，则视为正在播放
+    const isCurrentlyPlaying = watched > lastWatchedSeconds;
+    // 更新颜色：播放中为绿色，暂停为红色
+    currentWatchedElem.style.color = isCurrentlyPlaying ? 'green' : 'red';
+    // 更新上次观察到的时长
+    lastWatchedSeconds = watched;
+  }
+  
   // 剩余未观看课件总时长
   const remainSeconds = (currentTotalSeconds + finishedCourseTotalSeconds) - finishedCourseTotalSeconds - watched;
   document.getElementById('remain-duration').textContent = secToTime(remainSeconds);

@@ -165,131 +165,29 @@ if (!gotTheLock) {
         log('获取已观看时长失败: ' + e.message);
       }
     }
+
+    // 3秒后隐藏窗口
+    setTimeout(() => {
+      // 再次检查是否有二维码，如果没有才隐藏窗口
+      page.isVisible('#faceQRCode').then(qrVisible => {
+        if (!qrVisible) {
+          mainWindow.hide();
+          mainWindow.setSkipTaskbar(true);
+          log('窗口已隐藏到托盘。');
+        } else {
+          log('检测到新的二维码，保持窗口显示。');
+        }
+      }).catch(() => {
+        // 如果检查失败，为了安全起见也隐藏窗口
+        mainWindow.hide();
+        mainWindow.setSkipTaskbar(true);
+        log('窗口已隐藏到托盘。');
+      });
+    }, 3000);
     
-    // 执行回调函数，启动守护进程
+    // 执行回调函数
     if (typeof callback === 'function') {
       callback();
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  /**
-   * 监控二维码倒计时
-   * @param {Page} page - Playwright页面实例
-   * @param {BrowserWindow} mainWindow - 主窗口实例
-   * @returns {Promise<number>} 定时器ID
-   */
-  async function monitorQRCodeTimer(page, mainWindow) {
-    let timer = setInterval(async () => {
-      try {
-        // 检查二维码是否还可见
-        const qrVisible = await page.isVisible('#faceQRCode');
-        if (!qrVisible) {
-          // 二维码消失，说明人脸识别成功
-          clearInterval(timer);
-          timer = null;
-          await handleQRCodeSuccess(page, mainWindow, () => {
-            // 人脸识别成功后启动二维码守护进程
-            setTimeout(() => {
-              startQRCodeGuardian(page, mainWindow);
-              log('二维码守护进程已启动，将监控人脸识别二维码弹窗');
-            }, 3000);
-          });
-          return;
-        }
-
-        // 获取倒计时
-        const timerElem = await page.$('.heartCheckTimer');
-        if (timerElem) {
-          const timerText = await timerElem.textContent();
-          mainWindow.webContents.send('qrcode-timer', timerText);
-          
-          // 检查是否过期（0分0秒）
-          if (timerText.includes('0分0秒') || timerText.includes('0分 0秒')) {
-            // 避免重复调用刷新
-            if (!monitorQRCodeTimer.isRefreshing) {
-              monitorQRCodeTimer.isRefreshing = true;
-              await refreshQRCode(page, mainWindow);
-              // 设置一个短暂的延迟后重置刷新状态
-              setTimeout(() => {
-                monitorQRCodeTimer.isRefreshing = false;
-              }, 2000);
-            }
-          }
-        }
-      } catch (e) {
-        log('倒计时监控出错: ' + e.message);
-        // 如果获取失败，可能是二维码已经消失
-        clearInterval(timer);
-        timer = null;
-        
-        // 再次检查二维码是否还在
-        try {
-          const qrVisible = await page.isVisible('#faceQRCode');
-          if (!qrVisible) {
-            await handleQRCodeSuccess(page, mainWindow, () => {
-              // 人脸识别成功后启动二维码守护进程
-              setTimeout(() => {
-                startQRCodeGuardian(page, mainWindow);
-                log('二维码守护进程已启动，将监控人脸识别二维码弹窗');
-              }, 3000);
-            });
-          }
-        } catch (err) {
-          log('检查二维码可见性失败: ' + err.message);
-        }
-      }
-    }, 1000);
-    
-    // 初始化刷新状态标志
-    monitorQRCodeTimer.isRefreshing = false;
-    
-    return timer;
-  }
-
-  // ---------------------------------------------------------------------------
-  /**
-   * 初始化二维码处理
-   * @param {Page} page - Playwright页面实例
-   * @param {BrowserWindow} mainWindow - 主窗口实例
-   * @returns {Promise<void>}
-   */
-  async function initializeQRCode(page, mainWindow) {
-    try {
-      // 1. 等待二维码元素出现
-      await page.waitForSelector('#faceQRCode', { timeout: 10000 }).catch(() => {
-        log('未检测到二维码元素，可能网站结构已变化或不需要人脸识别');
-      });
-      
-      // 2. 检查二维码是否存在
-      const qrExists = await page.$('#faceQRCode') !== null;
-      if (!qrExists) {
-        log('未找到二维码元素，跳过人脸识别步骤');
-        return;
-      }
-      
-      // 3. 获取并显示二维码
-      const success = await getAndPushQRCode(page, mainWindow);
-      if (success) {
-        log('请打开微信扫描右侧二维码进行人脸识别。');
-        mainWindow.show();
-        mainWindow.focus();
-      }
-      
-      // 4. 启动二维码倒计时监控
-      const timer = await monitorQRCodeTimer(page, mainWindow);
-      
-      // 5. 设置超时处理
-      setTimeout(async () => {
-        const qrVisible = await page.isVisible('#faceQRCode').catch(() => false);
-        if (qrVisible && timer) {
-          log('人脸识别超时，将继续等待用户扫码。');
-          // 继续等待用户扫码，不启动守护进程
-        }
-      }, 120000);
-      
-    } catch (e) {
-      log('二维码处理失败：' + (e.message || e));
     }
   }
 
@@ -300,10 +198,17 @@ if (!gotTheLock) {
    * @param {BrowserWindow} mainWindow - 主窗口实例
    */
   async function startQRCodeGuardian(page, mainWindow) {
+    // 添加全局标志，防止重复启动
+    if (startQRCodeGuardian.isRunning) {
+      return;
+    }
+    startQRCodeGuardian.isRunning = true;
+
     let lastQRCodeVisible = false;
     let timer = null;
     let initialDetectionTime = Date.now(); // 记录守护进程启动时间
     let lastQRCodeDetectionTime = 0; // 上次检测到二维码的时间
+    let lastQRCodeProcessTime = 0;  // 上次处理二维码的时间
     
     log('二维码守护进程已启动，将监控人脸识别二维码弹窗');
     
@@ -322,58 +227,73 @@ if (!gotTheLock) {
             continue;
           }
 
+          const now = Date.now();
+
           if (qrVisible && !lastQRCodeVisible) {
             // 二维码弹窗刚刚出现
-            const now = Date.now();
-            // 避免在短时间内重复输出检测到二维码的日志(至少间隔10秒)
-            if (now - lastQRCodeDetectionTime > 10000) {
-              log('检测到二维码弹窗出现，请微信扫码进行人脸识别。');
-              lastQRCodeDetectionTime = now;
-            }
-            
-            // 判断是否在初次识别成功后的3秒内
-            const timeSinceStart = now - initialDetectionTime;
-            if (timeSinceStart <= 3000) {
-              log('检测到二维码在识别成功后3秒内再次出现，继续保持窗口显示。');
-              // 不执行显示窗口操作，因为窗口本来就是显示的
-            } else {
-              // 显示窗口并置顶
-              mainWindow.show();
-              mainWindow.focus();
-            }
-            
-            // 获取并推送二维码
-            await getAndPushQRCode(page, mainWindow);
+            // 确保距离上次处理二维码至少间隔3秒
+            if (now - lastQRCodeProcessTime > 3000) {
+              lastQRCodeProcessTime = now;
+              
+              // 避免在短时间内重复输出检测到二维码的日志(至少间隔10秒)
+              if (now - lastQRCodeDetectionTime > 10000) {
+                log('检测到二维码弹窗出现，请微信扫码进行人脸识别。');
+                lastQRCodeDetectionTime = now;
+              }
+              
+              // 判断是否在初次识别成功后的3秒内
+              const timeSinceStart = now - initialDetectionTime;
+              if (timeSinceStart <= 3000) {
+                log('检测到二维码在识别成功后3秒内再次出现，继续保持窗口显示。');
+              } else {
+                // 显示窗口并置顶
+                mainWindow.show();
+                mainWindow.focus();
+              }
+              
+              // 获取并推送二维码
+              await getAndPushQRCode(page, mainWindow);
 
-            // 启动倒计时监控
-            if (timer) {
-              clearInterval(timer);
-              timer = null;
+              // 启动倒计时监控（确保只有一个定时器在运行）
+              if (timer) {
+                clearInterval(timer);
+                timer = null;
+              }
+              
+              // 启动新定时器监控倒计时
+              timer = await monitorQRCodeTimer(page, mainWindow);
             }
-            
-            // 启动新定时器监控倒计时
-            timer = await monitorQRCodeTimer(page, mainWindow);
           }
 
           if (!qrVisible && lastQRCodeVisible) {
             // 二维码弹窗刚刚消失（人脸识别成功）
-            log('二维码弹窗消失，人脸识别成功，自动隐藏窗口到托盘。');
-            // 更新初次检测时间，用于下次判断
-            initialDetectionTime = Date.now();
-            mainWindow.hide();
-            // 清理倒计时定时器
-            if (timer) {
-              clearInterval(timer);
-              timer = null;
+            // 确保距离上次处理二维码至少间隔3秒
+            if (now - lastQRCodeProcessTime > 3000) {
+              lastQRCodeProcessTime = now;
+              
+              log('二维码弹窗消失，人脸识别成功，自动隐藏窗口到托盘。');
+              // 更新初次检测时间，用于下次判断
+              initialDetectionTime = now;
+              mainWindow.hide();
+              // 清理倒计时定时器
+              if (timer) {
+                clearInterval(timer);
+                timer = null;
+              }
+              // 处理二维码识别成功
+              await handleQRCodeSuccess(page, mainWindow);
             }
-            // 处理二维码识别成功
-            await handleQRCodeSuccess(page, mainWindow);
           }
 
           lastQRCodeVisible = qrVisible;
         } catch (innerError) {
           // 内部错误处理，继续循环
-          log('二维码守护内部错误: ' + innerError.message);
+          // 避免频繁输出错误日志
+          const now = Date.now();
+          if (now - startQRCodeGuardian.lastErrorTime > 5000) {
+            log('二维码守护内部错误: ' + innerError.message);
+            startQRCodeGuardian.lastErrorTime = now;
+          }
           await page.waitForTimeout(5000); // 出错后等待5秒再继续
         }
       }
@@ -385,6 +305,8 @@ if (!gotTheLock) {
         clearInterval(timer);
         timer = null;
       }
+      // 重置运行状态
+      startQRCodeGuardian.isRunning = false;
       // 重新启动守护进程
       setTimeout(() => {
         startQRCodeGuardian(page, mainWindow).catch(e => {
@@ -393,6 +315,139 @@ if (!gotTheLock) {
       }, 5000);
     }
   }
+
+  // 初始化静态属性
+  startQRCodeGuardian.isRunning = false;
+  startQRCodeGuardian.lastErrorTime = 0;
+
+  /**
+   * 初始化二维码监控
+   * @param {Page} page - Playwright页面实例
+   * @param {BrowserWindow} mainWindow - 主窗口实例
+   */
+  async function initializeQRCode(page, mainWindow) {
+    try {
+      // 检查是否有二维码
+      const qrVisible = await page.isVisible('#faceQRCode');
+      if (qrVisible) {
+        log('检测到二维码，准备获取...');
+        // 获取并推送二维码
+        await getAndPushQRCode(page, mainWindow);
+        // 启动倒计时监控，并等待人脸识别成功
+        await new Promise((resolve) => {
+          monitorQRCodeTimer(page, mainWindow, () => {
+            // 人脸识别成功后的回调
+            setTimeout(() => {
+              // 启动二维码守护进程
+              startQRCodeGuardian(page, mainWindow);
+            }, 3000);
+            resolve();
+          });
+        });
+      }
+    } catch (e) {
+      log('初始化二维码监控失败：' + e.message);
+    }
+  }
+
+  /**
+   * 监控二维码倒计时
+   * @param {Page} page - Playwright页面实例
+   * @param {BrowserWindow} mainWindow - 主窗口实例
+   * @param {Function} onSuccess - 人脸识别成功后的回调函数
+   * @returns {Promise<number>} 定时器ID
+   */
+  async function monitorQRCodeTimer(page, mainWindow, onSuccess = null) {
+    // 确保只有一个定时器在运行
+    if (monitorQRCodeTimer.timer) {
+      clearInterval(monitorQRCodeTimer.timer);
+      monitorQRCodeTimer.timer = null;
+    }
+
+    let lastTimerText = '';
+    let timer = setInterval(async () => {
+      try {
+        // 检查二维码是否还可见
+        const qrVisible = await page.isVisible('#faceQRCode');
+        if (!qrVisible) {
+          // 二维码消失，说明人脸识别成功
+          clearInterval(timer);
+          timer = null;
+          await handleQRCodeSuccess(page, mainWindow);
+          // 执行成功回调
+          if (typeof onSuccess === 'function') {
+            onSuccess();
+          }
+          return;
+        }
+
+        // 获取倒计时
+        const timerElem = await page.$('.heartCheckTimer');
+        if (timerElem) {
+          const timerText = await timerElem.textContent();
+          // 只有当倒计时文本发生变化时才推送
+          if (timerText !== lastTimerText) {
+            mainWindow.webContents.send('qrcode-timer', timerText);
+            lastTimerText = timerText;
+            
+            // 检查是否过期（0分0秒）
+            if (timerText.includes('0分0秒') || timerText.includes('0分 0秒')) {
+              // 避免重复调用刷新
+              if (!monitorQRCodeTimer.isRefreshing) {
+                monitorQRCodeTimer.isRefreshing = true;
+                await refreshQRCode(page, mainWindow);
+                // 设置一个短暂的延迟后重置刷新状态
+                setTimeout(() => {
+                  monitorQRCodeTimer.isRefreshing = false;
+                }, 2000);
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // 避免频繁输出错误日志
+        const now = Date.now();
+        if (now - monitorQRCodeTimer.lastErrorTime > 5000) {
+          log('倒计时监控出错: ' + e.message);
+          monitorQRCodeTimer.lastErrorTime = now;
+        }
+        
+        // 如果获取失败，可能是二维码已经消失
+        clearInterval(timer);
+        timer = null;
+        
+        // 再次检查二维码是否还在
+        try {
+          const qrVisible = await page.isVisible('#faceQRCode');
+          if (!qrVisible) {
+            await handleQRCodeSuccess(page, mainWindow);
+            // 执行成功回调
+            if (typeof onSuccess === 'function') {
+              onSuccess();
+            }
+          }
+        } catch (err) {
+          if (now - monitorQRCodeTimer.lastErrorTime > 5000) {
+            log('检查二维码可见性失败: ' + err.message);
+            monitorQRCodeTimer.lastErrorTime = now;
+          }
+        }
+      }
+    }, 1000);
+    
+    // 保存定时器引用
+    monitorQRCodeTimer.timer = timer;
+    
+    // 初始化刷新状态标志
+    monitorQRCodeTimer.isRefreshing = false;
+    
+    return timer;
+  }
+
+  // 初始化静态属性
+  monitorQRCodeTimer.timer = null;
+  monitorQRCodeTimer.isRefreshing = false;
+  monitorQRCodeTimer.lastErrorTime = 0;
 
   // ---------------------------------------------------------------------------
   /**
@@ -512,8 +567,8 @@ if (!gotTheLock) {
             mainWindow.webContents.send('update-course-list', { courseList });
           }
           lastLearned = result.learned;
-          // 如果已学完，自动切换到下一个学习中课件
-          if (result.status === '已学完') {
+          // 如果已学完或者学习时长已经达到或超过总时长，自动切换到下一个未学习课件
+          if (result.status === '已学完' || result.learned >= result.total) {
             const courseList = await page.evaluate(() => {
               const lis = Array.from(document.querySelectorAll('.video_list .kecheng_li'));
               return lis.map(li => {
@@ -526,13 +581,21 @@ if (!gotTheLock) {
                 else if (finishSpan && finishSpan.textContent.includes('学习中')) status = '学习中';
                 else if (total === learned && total > 0) status = '已学完';
                 else if (learned > 0) status = '学习中';
-                return { resourceid, status };
+                return { resourceid, status, total, learned };
               });
             });
-            const next = courseList.find(c => c.status === '学习中');
+            
+            // 优先选择"学习中"的课件，如果没有，则选择第一个未完成的课件
+            const next = courseList.find(c => c.status === '学习中') || 
+                        courseList.find(c => c.status === '未学习' || (c.learned < c.total));
+            
             if (next) {
+              log('当前课程已完成，正在切换到下一课程...');
               currentLearningResourceId = next.resourceid;
+              // 强制刷新课程列表
+              await updateCourseList(page, mainWindow, true);
             } else {
+              log('所有课程已学习完成！');
               clearInterval(progressTimer);
               progressTimer = null;
               currentLearningResourceId = null;
@@ -666,10 +729,20 @@ if (!gotTheLock) {
       log('正在点击"我知道了"按钮...');
       await page.click('div.iknow');
 
-      // 获取并更新课件列表
-      await updateCourseList(page, mainWindow, false);
-      
-      // 获取二维码并推送
+      // 8. 等待课件列表加载完成
+      log('等待课件列表加载...');
+      await page.waitForSelector('.video_list .kecheng_li', { state: 'attached', timeout: 10000 });
+      await page.waitForTimeout(2000); // 额外等待2秒确保列表完全加载
+
+      // 9. 获取并更新课件列表
+      const success = await updateCourseList(page, mainWindow, false);
+      if (!success) {
+        log('课件列表获取失败，请检查网络连接或刷新页面。');
+        return;
+      }
+
+      // 10. 等待课件列表更新完成后再初始化二维码监控
+      await page.waitForTimeout(1000);
       await initializeQRCode(page, mainWindow);
       
     } catch (e) {
