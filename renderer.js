@@ -395,7 +395,9 @@ ipcRenderer.on('update-course-list', (event, data) => {
   document.getElementById('remain-duration').textContent = secToTime(remainSeconds);
   // 预计完成时间 = 当前北京时间 + (本节课总时长-已观看时长)
   const now = new Date();
-  const finishTime = new Date(now.getTime() + (currentTotalSeconds - currentWatchedSeconds) * 1000);
+  // 确保预计完成时间不会是负值（当已学习时长大于课程总时长时）
+  const remainingSeconds = Math.max(0, currentTotalSeconds - currentWatchedSeconds);
+  const finishTime = new Date(now.getTime() + remainingSeconds * 1000);
   document.getElementById('lesson-finish-time').textContent = finishTime.toTimeString().slice(0,8);
 });
 
@@ -451,14 +453,15 @@ setInterval(() => {
     lastWatchedSeconds = watched;
   }
   
-  // 剩余未观看课件总时长
-  const remainSeconds = (currentTotalSeconds + finishedCourseTotalSeconds) - finishedCourseTotalSeconds - watched;
+  // 剩余未观看课件总时长（确保不会出现负值）
+  const remainSeconds = Math.max(0, (currentTotalSeconds + finishedCourseTotalSeconds) - finishedCourseTotalSeconds - watched);
   document.getElementById('remain-duration').textContent = secToTime(remainSeconds);
-  // 预计完成时间
-  const finishTime = new Date(Date.now() + (currentTotalSeconds - watched) * 1000);
+  // 预计完成时间（确保不会出现负值）
+  const remainingSeconds = Math.max(0, currentTotalSeconds - watched);
+  const finishTime = new Date(Date.now() + remainingSeconds * 1000);
   document.getElementById('lesson-finish-time').textContent = finishTime.toTimeString().slice(0,8);
-  // 课件完成后自动刷新
-  if (watched === currentTotalSeconds && currentTotalSeconds > 0) {
+  // 课件完成后自动刷新（当观看时间等于或超过总时长时）
+  if ((watched >= currentTotalSeconds) && currentTotalSeconds > 0) {
     isPlaying = false;
     selectedLi = null;
     ipcRenderer.invoke('refresh-course-list');

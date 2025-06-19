@@ -471,7 +471,7 @@ if (!gotTheLock) {
           const finishSpan = li.querySelector('.bofang_list_name_wanchengdu');
           if (finishSpan && finishSpan.textContent.includes('已学完')) status = '已学完';
           else if (finishSpan && finishSpan.textContent.includes('学习中')) status = '学习中';
-          else if (total === learned && total > 0) status = '已学完';
+          else if (total <= learned && total > 0) status = '已学完'; // 修改为大于等于，处理超时情况
           else if (learned > 0) status = '学习中';
           return { resourceid: rid, learned, total, status };
         }, currentLearningResourceId);
@@ -494,7 +494,7 @@ if (!gotTheLock) {
               let status = '未学习';
               if (finishSpan && finishSpan.textContent.includes('已学完')) status = '已学完';
               else if (finishSpan && finishSpan.textContent.includes('学习中')) status = '学习中';
-              else if (total === learned && total > 0) status = '已学完';
+              else if (total <= learned && total > 0) status = '已学完'; // 修改为大于等于，处理超时情况
               else if (learned > 0) status = '学习中';
               let name = '';
               const nameDiv = li.querySelector('.bofang_list_name_title');
@@ -519,14 +519,17 @@ if (!gotTheLock) {
           }
           const totalDurationSec = courseList.reduce((sum, item) => sum + timeToSec(item.duration), 0);
           const finishedCourseTotalSeconds = courseList.filter(item => item.status === '已学完').reduce((sum, item) => sum + timeToSec(item.duration), 0);
-          const remainSeconds = totalDurationSec - finishedCourseTotalSeconds - result.learned;
+          // 确保剩余时间不会是负数
+          const remainSeconds = Math.max(0, totalDurationSec - finishedCourseTotalSeconds - result.learned);
           // 计算本节课总时长
           let currentTotalSeconds = 0;
           const currentCourse = courseList.find(item => item.resourceid === result.resourceid);
           if (currentCourse) currentTotalSeconds = timeToSec(currentCourse.duration);
           // 预计完成时间 = 当前北京时间 + (本节课总时长-本节课已观看时长)
           const now = new Date();
-          const finishTime = new Date(now.getTime() + (currentTotalSeconds - result.learned) * 1000);
+          // 确保预计完成时间不会是负值（当已学习时长大于课程总时长时）
+          const remainingSeconds = Math.max(0, currentTotalSeconds - result.learned);
+          const finishTime = new Date(now.getTime() + remainingSeconds * 1000);
           const finishTimeStr = finishTime.toTimeString().slice(0,8);
           mainWindow.webContents.send('update-current-learned', { resourceid: result.resourceid, learned: result.learned, remainSeconds, finishTimeStr });
           // 检测课件切换（已观看时长从非0变为0）
@@ -579,7 +582,7 @@ if (!gotTheLock) {
                 const finishSpan = li.querySelector('.bofang_list_name_wanchengdu');
                 if (finishSpan && finishSpan.textContent.includes('已学完')) status = '已学完';
                 else if (finishSpan && finishSpan.textContent.includes('学习中')) status = '学习中';
-                else if (total === learned && total > 0) status = '已学完';
+                else if (total <= learned && total > 0) status = '已学完'; // 修改为大于等于，处理超时情况
                 else if (learned > 0) status = '学习中';
                 return { resourceid, status, total, learned };
               });
@@ -645,7 +648,7 @@ if (!gotTheLock) {
             let status = '未学习';
             if (finishSpan && finishSpan.textContent.includes('已学完')) status = '已学完';
             else if (finishSpan && finishSpan.textContent.includes('学习中')) status = '学习中';
-            else if (total === learned && total > 0) status = '已学完';
+            else if (total <= learned && total > 0) status = '已学完'; // 修改为大于等于，处理超时情况
             else if (learned > 0) status = '学习中';
             let name = '';
             const nameDiv = li.querySelector('.bofang_list_name_title');
@@ -1020,7 +1023,49 @@ if (!gotTheLock) {
 
   // ---------------------------------------------------------------------------
   // 应用程序就绪
-  app.whenReady().then(createWindow);
+  app.whenReady().then(() => {
+    // 显示使用方法和风险告知HTML弹窗
+    let welcomeWindow = new BrowserWindow({
+      width: 580,
+      height: 620,
+      resizable: false,
+      frame: true,
+      autoHideMenuBar: true,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+      },
+      icon: path.join(__dirname, 'icon.ico')
+    });
+    
+    // 加载HTML
+    welcomeWindow.loadFile('welcome.html');
+    
+    // 处理用户响应
+    ipcMain.on('welcome-response', (event, agree) => {
+      if (agree) {
+        // 用户点击"已知晓并同意"
+        createWindow();
+      } else {
+        // 用户点击"不同意并关闭"
+        app.quit();
+      }
+      // 关闭欢迎窗口
+      if (welcomeWindow) {
+        welcomeWindow.close();
+        welcomeWindow = null;
+      }
+    });
+    
+    // 如果用户关闭窗口而不是点按钮，默认退出应用
+    welcomeWindow.on('closed', () => {
+      // 如果主窗口还没创建，则退出程序
+      if (!mainWindow) {
+        app.quit();
+      }
+      welcomeWindow = null;
+    });
+  });
 
   // ---------------------------------------------------------------------------
   // 窗口关闭

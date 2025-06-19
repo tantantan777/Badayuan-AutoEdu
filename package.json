@@ -1,6 +1,6 @@
 {
   "name": "badaoyuan-auto-edu",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "四川省八大员继续教育自动化",
   "main": "main.js",
   "scripts": {

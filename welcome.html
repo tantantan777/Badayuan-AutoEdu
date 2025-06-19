@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>使用方法和风险告知</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #ffffff;
+      color: #2c3e50;
+      user-select: none;
+    }
+    .container {
+      max-width: 580px;
+      margin: 0 auto;
+      padding: 0;
+    }
+    header {
+      padding: 28px 0;
+      text-align: center;
+      border-bottom: 1px solid #eaeaea;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 500;
+      color: #2c3e50;
+    }
+    .content {
+      padding: 24px 32px;
+    }
+    section {
+      margin-bottom: 24px;
+    }
+    h2 {
+      font-size: 16px;
+      font-weight: 500;
+      margin: 0 0 16px 0;
+      color: #2c3e50;
+      display: flex;
+      align-items: center;
+    }
+    h2 .icon {
+      margin-right: 8px;
+    }
+    ul {
+      padding-left: 20px;
+      margin: 0;
+    }
+    li {
+      margin-bottom: 8px;
+      font-size: 14px;
+      line-height: 1.4;
+      color: #5a6878;
+    }
+    .disclaimer {
+      padding: 16px;
+      background-color: #f8f9fa;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #5a6878;
+      margin-top: 8px;
+    }
+    .disclaimer p {
+      margin: 0;
+      line-height: 1.5;
+    }
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #eaeaea;
+    }
+    button {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      box-shadow: none;
+      outline: none;
+    }
+    .agree {
+      background-color: #3498db;
+      color: white;
+    }
+    .agree:hover {
+      background-color: #2980b9;
+    }
+    .disagree {
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      color: #7f8c8d;
+    }
+    .disagree:hover {
+      background-color: #f5f5f5;
+    }
+    .version {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 12px;
+      color: #bdc3c7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>四川省八大员继续教育自动化助手</h1>
+    </header>
+    
+    <div class="content">
+      <section>
+        <h2><span class="icon">📱</span>使用方法</h2>
+        <ul>
+          <li>提供浏览器路径、账号和密码，点击启动按钮后，程序会自动打开浏览器，初次使用需要人脸识别扫码，完成后自动播放。</li>
+          <li>播放过程中需要人脸识别会自动弹窗，仅需完成扫码即可继续播放。</li>
+        </ul>
+      </section>
+      
+      <section>
+        <h2><span class="icon">⚠️</span>风险告知</h2>
+        <ul>
+          <li>仅辅助学习，不替代真实学习行为</li>
+          <li>确保网络稳定，避免识别失败</li>
+          <li>可能违反网站条款，存在账号封禁风险</li>
+        </ul>
+      </section>
+      
+      <div class="disclaimer">
+        <p>使用本程序产生的任何后果（包括账号封禁、学习记录无效等）均由使用者本人承担。开发者不承担法律责任。</p>
+      </div>
+      
+      <div class="buttons">
+        <button class="agree" id="agree-btn">已知晓并同意</button>
+        <button class="disagree" id="disagree-btn">不同意并关闭</button>
+      </div>
+
+      <div class="version">v1.0.3</div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    
+    document.getElementById('agree-btn').addEventListener('click', () => {
+      ipcRenderer.send('welcome-response', true);
+    });
+    
+    document.getElementById('disagree-btn').addEventListener('click', () => {
+      ipcRenderer.send('welcome-response', false);
+    });
+  </script>
+</body>
+</html> 
